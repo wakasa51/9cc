@@ -1,5 +1,13 @@
 #include "9cc.h"
 
+void error(char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
+}
+
 void error_at(char *loc, char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
@@ -20,6 +28,14 @@ bool consume(char *op) {
     return false;
   token = token->next;
   return true;
+}
+
+Token *consume_ident() {
+  if (token->kind != TK_IDENT)
+    return NULL;
+  Token *t = token;
+  token = token->next;
+  return t;
 }
 
 void expect(char *op) {
@@ -61,6 +77,9 @@ static Node *new_node_num(int val) {
   return node;
 }
 
+static Node *stmt();
+static Node *expr();
+static Node *assign();
 static Node *equality();
 static Node *relational();
 static Node *add();
@@ -68,8 +87,31 @@ static Node *mul();
 static Node *unary();
 static Node *primary();
 
-Node *expr() {
-  return equality();
+Node *code[100];
+
+void program() {
+  int i = 0;
+  while (!at_eof())
+    code[i++] = stmt();
+  code[i] = NULL;
+}
+
+static Node *stmt() {
+  Node *node = expr();
+  expect(";");
+  return node;
+}
+
+static Node *expr() {
+  return assign();
+}
+
+static Node *assign() {
+  Node *node = equality();
+
+  if (consume("="))
+    node = new_node(ND_ASSIGN, node, assign());
+  return node;
 }
 
 static Node *equality() {
@@ -140,6 +182,14 @@ static Node *primary() {
   if (consume("(")) {
     Node *node = expr();
     expect(")");
+    return node;
+  }
+
+  Token *tok = consume_ident();
+  if (tok) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] - 'a' + 1) * 8;
     return node;
   }
 
