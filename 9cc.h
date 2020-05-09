@@ -23,9 +23,6 @@ struct Token {
   int len;        // トークンの長さ
 };
 
-char *user_input;
-
-Token *token;
 Token *tokenize(char *p);
 
 typedef struct LVar LVar;
@@ -35,7 +32,6 @@ struct LVar {
   int len;
   int offset;
 };
-LVar *locals;
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
@@ -65,7 +61,11 @@ struct Node {
   int offset; // kindがND_LVARの場合のみ使う
 };
 
-Node *code[100];
 void program();
-
 void gen(Node *node);
+
+// グローバル変数
+extern char *user_input;
+extern Token *token;
+extern LVar *locals;
+extern Node *code[100];

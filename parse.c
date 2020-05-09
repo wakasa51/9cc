@@ -1,5 +1,8 @@
 #include "9cc.h"
 
+LVar *locals;
+Node *code[100];
+
 static LVar *find_lvar(Token *tok) {
   for (LVar *var = locals; var; var = var->next)
     if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
