@@ -50,5 +50,6 @@ assert 3 '1; 2; 3;'
 
 assert 3 'a=3;'
 assert 5 'a=3; b  = 5;'
+assert 5 'ab_cd_e139931_003=3; jfioejaoie = 5;'
 
 echo OK

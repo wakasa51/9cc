@@ -26,6 +26,15 @@ Token *token;
 Token *tokenize(char *p);
 char *user_input;
 
+typedef struct LVar LVar;
+struct LVar {
+  LVar *next;
+  char *name;
+  int len;
+  int offset;
+};
+LVar *locals;
+
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
