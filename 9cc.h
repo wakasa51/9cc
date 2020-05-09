@@ -23,9 +23,10 @@ struct Token {
   int len;        // トークンの長さ
 };
 
+char *user_input;
+
 Token *token;
 Token *tokenize(char *p);
-char *user_input;
 
 typedef struct LVar LVar;
 struct LVar {
@@ -38,10 +39,6 @@ LVar *locals;
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
-bool consume(char *op);
-void expect(char *op);
-int expect_number();
-bool at_eof();
 bool startswith(char *p, char *q);
 
 typedef enum {
@@ -60,7 +57,6 @@ typedef enum {
 } NodeKind;
 
 typedef struct Node Node;
-
 struct Node {
   NodeKind kind;
   Node *lhs;

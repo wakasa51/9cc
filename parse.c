@@ -28,7 +28,7 @@ void error_at(char *loc, char *fmt, ...) {
   exit(1);
 }
 
-bool consume(char *op) {
+static bool consume(char *op) {
   if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
       memcmp(token->str, op, token->len))
@@ -52,7 +52,7 @@ Token *consume_ident() {
   return t;
 }
 
-void expect(char *op) {
+static void expect(char *op) {
   if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
       memcmp(token->str, op, token->len))
@@ -60,7 +60,7 @@ void expect(char *op) {
   token = token->next;
 }
 
-int expect_number() {
+static int expect_number() {
   if (token->kind != TK_NUM)
     error_at(token->str, "数ではありません");
   int val = token->val;
@@ -68,7 +68,7 @@ int expect_number() {
   return val;
 }
 
-bool at_eof() {
+static bool at_eof() {
   return token->kind == TK_EOF;
 }
 
