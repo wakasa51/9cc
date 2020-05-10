@@ -10,10 +10,6 @@ typedef enum {
   TK_RESERVED, // 記号
   TK_IDENT,    // 識別子
   TK_NUM,      // 整数トークン
-  TK_IF,       // if句
-  TK_WHILE,    // while句
-  TK_FOR,    // while句
-  TK_RETURN,   // return句
   TK_EOF,      // 入力の終わりを表すトークン
 } TokenKind;
 

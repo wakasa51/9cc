@@ -17,6 +17,19 @@ static bool is_alnum (char c) {
   return is_plpha(c) || ('0' <= c && c <= '9');
 }
 
+static char *check_reserved_word (char *p) {
+  static char *kw[] = { "return", "if", "while", "for" };
+
+  for (int i = 0; i < sizeof(kw)/ sizeof(*kw); i++) {
+    int len = strlen(kw[i]);
+    if (strncmp(p, kw[i], len) == 0 && !is_alnum(p[len])) {
+      return kw[i];
+    }
+  }
+
+  return NULL;
+}
+
 Token *tokenize(char *p) {
   Token head;
   head.next = NULL;
@@ -40,27 +53,11 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6])) {
-      cur = new_token(TK_RETURN, cur, p, 6);
-      p += 6;
-      continue;
-    }
-
-    if (strncmp(p, "if", 2) == 0 && !is_alnum(p[2])) {
-      cur = new_token(TK_IF, cur, p, 2);
-      p += 2;
-      continue;
-    }
-
-    if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5])) {
-      cur = new_token(TK_WHILE, cur, p, 5);
-      p += 5;
-      continue;
-    }
-
-    if (strncmp(p, "for", 3) == 0 && !is_alnum(p[3])) {
-      cur = new_token(TK_FOR, cur, p, 3);
-      p += 3;
+    char *kw = check_reserved_word(p);
+    if (kw) {
+      int len = strlen(kw);
+      cur = new_token(TK_RESERVED, cur, p, len);
+      p += len;
       continue;
     }
 

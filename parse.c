@@ -40,34 +40,6 @@ static bool consume(char *op) {
   return true;
 }
 
-static bool consume_if() {
-  if (token->kind != TK_IF)
-    return false;
-  token = token->next;
-  return true;
-}
-
-static bool consume_while() {
-  if (token->kind != TK_WHILE)
-    return false;
-  token = token->next;
-  return true;
-}
-
-static bool consume_for() {
-  if (token->kind != TK_FOR)
-    return false;
-  token = token->next;
-  return true;
-}
-
-static bool consume_return() {
-  if (token->kind != TK_RETURN)
-    return false;
-  token = token->next;
-  return true;
-}
-
 Token *consume_ident() {
   if (token->kind != TK_IDENT)
     return NULL;
@@ -140,14 +112,14 @@ static Node *stmt() {
   Node *node;
   node = calloc(1, sizeof(Node));
 
-  if (consume_return()) {
+  if (consume("return")) {
     node->kind = ND_RETURN;
     node->lhs = expr();
     expect(";");
     return node;
   }
 
-  if (consume_if()) {
+  if (consume("if")) {
     node->kind = ND_IF;
     expect("(");
     node->cond = expr();
@@ -158,7 +130,7 @@ static Node *stmt() {
     return node;
   }
 
-  if (consume_while()) {
+  if (consume("while")) {
     node->kind = ND_WHILE;
     expect("(");
     node->cond = expr();
@@ -167,7 +139,7 @@ static Node *stmt() {
     return node;
   }
 
-  if (consume_for()) {
+  if (consume("for")) {
     node->kind = ND_FOR;
     expect("(");
     if (!consume(";")) {
