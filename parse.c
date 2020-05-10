@@ -158,6 +158,20 @@ static Node *stmt() {
     return node;
   }
 
+  if (consume("{")) {
+    node->kind = ND_BLOCK;
+    Node head = {};
+    Node *cur = &head;
+
+    while(!consume("}")) {
+      cur->next = stmt();
+      cur = cur->next;
+    }
+
+    node->body = head.next;
+    return node;
+  }
+
   node = expr();
   expect(";");
   return node;

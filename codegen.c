@@ -85,6 +85,14 @@ void gen(Node *node) {
     printf(".L.end.%d:\n", seq);
     return;
   }
+  case ND_BLOCK: {
+    Node *cur = node->body;
+    while(cur) {
+      gen(cur);
+      cur = cur->next;
+    }
+    return;
+  }
   case ND_RETURN:
     gen(node->lhs);
     printf("  pop rax\n");
