@@ -10,6 +10,8 @@ typedef enum {
   TK_RESERVED, // 記号
   TK_IDENT,    // 識別子
   TK_NUM,      // 整数トークン
+  TK_IF,       // if句
+  TK_WHILE,    // while句
   TK_RETURN,   // return句
   TK_EOF,      // 入力の終わりを表すトークン
 } TokenKind;
@@ -48,6 +50,8 @@ typedef enum {
   ND_NE,      // !=
   ND_LT,      // <
   ND_LE,      // <=
+  ND_IF,      // if
+  ND_WHILE,   // while
   ND_RETURN,  // return
   ND_NUM,     // Integer
 } NodeKind;
@@ -57,6 +61,9 @@ struct Node {
   NodeKind kind;
   Node *lhs;
   Node *rhs;
+  Node *cond;
+  Node *then;
+  Node *els;
   int val;    // kindがND_NUMの場合のみ使う
   int offset; // kindがND_LVARの場合のみ使う
 };

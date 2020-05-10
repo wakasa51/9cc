@@ -40,7 +40,21 @@ static bool consume(char *op) {
   return true;
 }
 
-bool consume_return() {
+static bool consume_if() {
+  if (token->kind != TK_IF)
+    return false;
+  token = token->next;
+  return true;
+}
+
+static bool consume_while() {
+  if (token->kind != TK_WHILE)
+    return false;
+  token = token->next;
+  return true;
+}
+
+static bool consume_return() {
   if (token->kind != TK_RETURN)
     return false;
   token = token->next;
@@ -117,17 +131,37 @@ void program() {
 
 static Node *stmt() {
   Node *node;
+  node = calloc(1, sizeof(Node));
 
   if (consume_return()) {
-    node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr();
-  } else {
-    node = expr();
+    expect(";");
+    return node;
   }
 
-  if (!consume(";"))
-    error_at(token->str, "';'ではないトークンです");
+  if (consume_if()) {
+    node->kind = ND_IF;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    if (consume("else"))
+      node->els = stmt();
+    return node;
+  }
+
+  if (consume_while()) {
+    node->kind = ND_WHILE;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    return node;
+  }
+
+  node = expr();
+  expect(";");
   return node;
 }
 
