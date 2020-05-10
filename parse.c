@@ -54,6 +54,13 @@ static bool consume_while() {
   return true;
 }
 
+static bool consume_for() {
+  if (token->kind != TK_FOR)
+    return false;
+  token = token->next;
+  return true;
+}
+
 static bool consume_return() {
   if (token->kind != TK_RETURN)
     return false;
@@ -156,6 +163,25 @@ static Node *stmt() {
     expect("(");
     node->cond = expr();
     expect(")");
+    node->then = stmt();
+    return node;
+  }
+
+  if (consume_for()) {
+    node->kind = ND_FOR;
+    expect("(");
+    if (!consume(";")) {
+      node->init = expr();
+      expect(";");
+    }
+    if (!consume(";")) {
+      node->cond = expr();
+      expect(";");
+    }
+    if (!consume(")")) {
+      node->inc = expr();
+      expect(")");
+    }
     node->then = stmt();
     return node;
   }

@@ -35,7 +35,7 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if (strchr("+-*/()<>;=", *p)) {
+    if (strchr("+-*/()<>;={}", *p)) {
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -55,6 +55,12 @@ Token *tokenize(char *p) {
     if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5])) {
       cur = new_token(TK_WHILE, cur, p, 5);
       p += 5;
+      continue;
+    }
+
+    if (strncmp(p, "for", 3) == 0 && !is_alnum(p[3])) {
+      cur = new_token(TK_FOR, cur, p, 3);
+      p += 3;
       continue;
     }
 
