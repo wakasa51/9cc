@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -51,6 +52,7 @@ typedef enum {
   ND_WHILE,   // while
   ND_FOR,     // for
   ND_BLOCK,   // {} (block)
+  ND_FUNCALL, // Function call
   ND_RETURN,  // return
   ND_NUM,     // Integer
 } NodeKind;
@@ -67,6 +69,8 @@ struct Node {
   Node *init;
   Node *inc;
   Node *body;
+  char *funcname;
+  Node *args;
   int val;    // kindがND_NUMの場合のみ使う
   int offset; // kindがND_LVARの場合のみ使う
 };
