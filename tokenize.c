@@ -1,67 +1,123 @@
 #include "9cc.h"
 
+// Input string
+static char *current_input;
+// Reports an error and exit.
+
+void error(char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
+}
+
+// Reports an error location and exit.
+static void verror_at(char *loc, char *fmt, va_list ap) {
+  int pos = loc - current_input;
+  fprintf(stderr, "%s\n", current_input);
+  fprintf(stderr, "%*s", pos, ""); // print pos spaces.
+  fprintf(stderr, "^ ");
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
+}
+
+static void error_at(char *loc, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(loc, fmt, ap);
+}
+
+void error_tok(Token *tok, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(tok->loc, fmt, ap);
+}
+
+// Consumes the current token if it matches `op`.
+bool equal(Token *tok, char *op) {
+  return strlen(op) == tok->len &&
+         !strncmp(tok->loc, op, tok->len);
+}
+
+// Ensure that the current token is `op`.
+Token *skip(Token *tok, char *op) {
+  if (!equal(tok, op))
+    error_tok(tok, "expected '%s'", op);
+  return tok->next;
+}
+
+bool consume(Token **rest, Token *tok, char *str) {
+  if (equal(tok, str)) {
+    *rest = tok->next;
+    return true;
+  }
+  *rest = tok;
+  return false;
+}
+
+// Create a new token and add it as the next token of `cur`.
 static Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   Token *tok = calloc(1, sizeof(Token));
   tok->kind = kind;
-  tok->str = str;
+  tok->loc = str;
   tok->len = len;
   cur->next = tok;
   return tok;
 }
 
-static bool is_plpha (char c) {
+static bool startswith(char *p, char *q) {
+  return strncmp(p, q, strlen(q)) == 0;
+}
+
+static bool is_alpha(char c) {
   return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
-static bool is_alnum (char c) {
-  return is_plpha(c) || ('0' <= c && c <= '9');
+static bool is_alnum(char c) {
+  return is_alpha(c) || ('0' <= c && c <= '9');
 }
 
-static char *check_reserved_word (char *p) {
-  static char *kw[] = { "return", "if", "while", "for" };
+static bool is_keyword(Token *tok) {
+  static char *kw[] = {"return", "if", "else", "for", "while", "int"};
 
-  for (int i = 0; i < sizeof(kw)/ sizeof(*kw); i++) {
-    int len = strlen(kw[i]);
-    if (strncmp(p, kw[i], len) == 0 && !is_alnum(p[len])) {
-      return kw[i];
-    }
-  }
-
-  return NULL;
+  for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++)
+    if (equal(tok, kw[i]))
+      return true;
+  return false;
 }
 
+static void convert_keywords(Token *tok) {
+  for (Token *t = tok; t->kind != TK_EOF; t = t->next)
+    if (t->kind == TK_IDENT && is_keyword(t))
+      t->kind = TK_RESERVED;
+}
+
+// Tokenize a given string and returns new tokens.
 Token *tokenize(char *p) {
-  Token head;
-  head.next = NULL;
+  current_input = p;
+  Token head = {};
   Token *cur = &head;
 
   while (*p) {
+    // Skip whitespace characters.
     if (isspace(*p)) {
       p++;
       continue;
     }
 
-    if (startswith(p, "==") || startswith(p, "!=") ||
-        startswith(p, "<=") || startswith(p, ">=")) {
-      cur = new_token(TK_RESERVED, cur, p, 2);
-      p += 2;
+    // Numeric literal
+    if (isdigit(*p)) {
+      cur = new_token(TK_NUM, cur, p, 0);
+      char *q = p;
+      cur->val = strtoul(p, &p, 10);
+      cur->len = p - q;
       continue;
     }
 
-    if (ispunct(*p)) {
-      cur = new_token(TK_RESERVED, cur, p++, 1);
-      continue;
-    }
-
-    char *kw = check_reserved_word(p);
-    if (kw) {
-      int len = strlen(kw);
-      cur = new_token(TK_RESERVED, cur, p, len);
-      p += len;
-      continue;
-    }
-
-    if (is_plpha(*p)) {
+    // Identifier
+    if (is_alpha(*p)) {
       char *q = p++;
       while (is_alnum(*p))
         p++;
@@ -69,17 +125,24 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if (isdigit(*p)) {
-      cur = new_token(TK_NUM, cur, p, 0);
-      char *q = p;
-      cur->val = strtol(p, &p, 10);
-      cur->len = p - q;
+    // Multi-letter punctuators
+    if (startswith(p, "==") || startswith(p, "!=") ||
+        startswith(p, "<=") || startswith(p, ">=")) {
+      cur = new_token(TK_RESERVED, cur, p, 2);
+      p += 2;
       continue;
     }
 
-    error_at(p, "トークナイズできません");
+    // Single-letter punctuators
+    if (ispunct(*p)) {
+      cur = new_token(TK_RESERVED, cur, p++, 1);
+      continue;
+    }
+
+    error_at(p, "invalid token");
   }
 
   new_token(TK_EOF, cur, p, 0);
+  convert_keywords(head.next);
   return head.next;
 }

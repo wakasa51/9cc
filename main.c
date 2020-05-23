@@ -1,36 +1,25 @@
 #include "9cc.h"
 
-char *user_input;
-Token *token;
-
+static int align_to(int n, int align) {
+  return (n + align - 1) & ~(align - 1);
+}
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    fprintf(stderr, "引数の個数が正しくありません\n");
-    return 1;
+  if (argc != 2)
+    error("%s: invalid number of arguments", argv[0]);
+  Token *tok = tokenize(argv[1]);
+  Function *prog = parse(tok);
+
+  // Assign offsets to local variables.
+  for (Function *fn = prog; fn; fn = fn->next) {
+    int offset = 32; // 32 for callee-saved registers
+    for (Var *var = fn->locals; var; var = var->next) {
+      offset += 8;
+      var->offset = offset;
+    }
+    fn->stack_size = align_to(offset, 16);
   }
 
-  user_input = argv[1];
-  token = tokenize(argv[1]);
-  program();
-
-  printf(".intel_syntax noprefix\n");
-  printf(".global main\n");
-  printf("main:\n");
-
-  // プロローグ
-  // 変数26個分の領域を確保する
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n");
-
-  for (int i = 0; code[i]; i++) {
-    gen(code[i]);
-
-    printf("  pop rax\n");
-  }
-
-  printf("  mov rsp, rbp\n");
-  printf("  pop rbp\n");
-  printf("  ret\n");
+  // Traverse the AST to emit assembly.
+  codegen(prog);
   return 0;
 }
